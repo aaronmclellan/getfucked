@@ -519,7 +519,7 @@ function init() {
         const gif = GIFS.find(g => g.id === gifId);
         if (gif) {
             // a reload of the gif already on screen shouldn't add it to history again
-            if (history[historyIndex] && history[historyIndex].id === gif.id) displayGif(gif);
+            if (history[historyIndex] && history[historyIndex].id === gif.id) { markSeen(gif); displayGif(gif); }
             else showGif(gif);
             return;
         }
@@ -527,7 +527,11 @@ function init() {
 
     // Coming back: pick up on the last gif seen, skipping any that have since been removed
     while (historyIndex >= 0 && !GIFS.some(g => g.id === history[historyIndex].id)) historyIndex--;
-    if (historyIndex >= 0) displayGif(GIFS.find(g => g.id === history[historyIndex].id));
+    if (historyIndex >= 0) {
+        const gif = GIFS.find(g => g.id === history[historyIndex].id);
+        markSeen(gif);
+        displayGif(gif);
+    }
 }
 
 /* ==============================================
@@ -568,9 +572,15 @@ function preloadNext() {
     preloadImg.src = upNext.url;
 }
 
-function showGif(gif) {
+// Count a gif as seen and update the counter
+function markSeen(gif) {
     seen.add(gif.id);
     localStorage.setItem('gf_seen', JSON.stringify([...seen]));
+    updateCounter();
+}
+
+function showGif(gif) {
+    markSeen(gif);
 
     // Add to history
     if (historyIndex < history.length - 1) {
@@ -582,7 +592,6 @@ function showGif(gif) {
     localStorage.setItem('gf_history', JSON.stringify(history));
 
     displayGif(gif);
-    updateCounter();
     if (sidebarTab === 'history') renderSidebar();
 
     // Autoplay bar
